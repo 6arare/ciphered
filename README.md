@@ -3,7 +3,7 @@ Terminal-based Encryption/Decryption program written in pure Rust
 
 ## Installation
 ```console
-cargo install ciphered
+$ cargo install ciphered
 ```
 
 ## Usage
