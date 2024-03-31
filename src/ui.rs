@@ -1,7 +1,7 @@
 #![allow(clippy::wildcard_imports, clippy::enum_glob_use)]
 
 use std::io::stdout;
-
+use KeyCode::*;
 use color_eyre::{config::HookBuilder, Result};
 use crossterm::{
     event::{self, Event, KeyCode, KeyEventKind},
@@ -27,14 +27,18 @@ enum AppState {
 #[derive(Default, Clone, Copy, Display, FromRepr, EnumIter)]
 enum SelectedTab {
     #[default]
-    #[strum(to_string = "base64")]
-    base64,
-    #[strum(to_string = "Tab 2")]
+    #[strum(to_string = "tab1")]
+    tab1,
+    #[strum(to_string = "Hex")]
     Tab2,
-    #[strum(to_string = "Tab 3")]
+    #[strum(to_string = "XOR")]
     Tab3,
-    #[strum(to_string = "Tab 4")]
+    #[strum(to_string = "MD5")]
     Tab4,
+    #[strum(to_string = "tab5")]
+    Tab5,
+    #[strum(to_string = "tab6")]
+    Tab6,
 }
 
 pub fn init_ui() -> Result<()> {
@@ -62,7 +66,6 @@ impl App {
     fn handle_events(&mut self) -> std::io::Result<()> {
         if let Event::Key(key) = event::read()? {
             if key.kind == KeyEventKind::Press {
-                use KeyCode::*;
                 match key.code {
                     Char('l') | Right => self.next_tab(),
                     Char('h') | Left => self.previous_tab(),
@@ -147,10 +150,12 @@ impl Widget for SelectedTab {
     fn render(self, area: Rect, buf: &mut Buffer) {
         // in a real app these might be separate widgets
         match self {
-            Self::base64 => self.render_tab0(area, buf),
+            Self::tab1 => self.render_tab0(area, buf),
             Self::Tab2 => self.render_tab1(area, buf),
             Self::Tab3 => self.render_tab2(area, buf),
             Self::Tab4 => self.render_tab3(area, buf),
+            Self::Tab5 => self.render_tab3(area, buf),
+            Self::Tab6 => self.render_tab3(area, buf),
         }
     }
 }
@@ -199,10 +204,12 @@ impl SelectedTab {
 
     const fn palette(self) -> tailwind::Palette {
         match self {
-            Self::base64 => tailwind::BLUE,
+            Self::tab1 => tailwind::BLUE,
             Self::Tab2 => tailwind::EMERALD,
             Self::Tab3 => tailwind::INDIGO,
             Self::Tab4 => tailwind::RED,
+            Self::Tab5 => tailwind::RED,
+            Self::Tab6 => tailwind::RED,
         }
     }
 }
