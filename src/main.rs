@@ -2,8 +2,9 @@ use std::io::Result;
 
 use crate::base64mod::*;
 mod base64mod;
-// mod ui;
+mod ui;
 fn main ()->Result<()>{
+ui::init_ui().unwrap();
 println!("{}",encode_base64("asd"));
 println!("{}",String::from_utf8(decode_base64("YXNk").unwrap()).unwrap());
     Ok(())
