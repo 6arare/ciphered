@@ -15,6 +15,7 @@ use strum::{Display, EnumIter, FromRepr, IntoEnumIterator};
 struct App {
     state: AppState,
     selected_tab: SelectedTab,
+    tab_state:TabState,
 }
 
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
@@ -24,10 +25,17 @@ enum AppState {
     Quitting,
 }
 
+#[derive(Default, Clone, Copy, PartialEq, Eq)]
+enum TabState {
+    #[default]
+    Selected,
+    NotSelected,
+}
+
 #[derive(Default, Clone, Copy, Display, FromRepr, EnumIter)]
 enum SelectedTab {
     #[default]
-    #[strum(to_string = "tab1")]
+    #[strum(to_string = "base64")]
     tab1,
     #[strum(to_string = "Hex")]
     Tab2,
@@ -70,6 +78,8 @@ impl App {
                     Char('l') | Right => self.next_tab(),
                     Char('h') | Left => self.previous_tab(),
                     Char('q') | Esc => self.quit(),
+                    Char('k') | Up => self.unselect_tab(),
+                    Char('j') | Down => self.select_tab(),
                     _ => {}
                 }
             }
@@ -87,6 +97,12 @@ impl App {
 
     pub fn quit(&mut self) {
         self.state = AppState::Quitting;
+    }
+    pub fn select_tab(&mut self){
+        self.tab_state=TabState::Selected;
+    }
+    pub fn unselect_tab(&mut self){
+        self.tab_state=TabState::NotSelected;
     }
 }
 
@@ -159,59 +175,58 @@ impl Widget for SelectedTab {
         }
     }
 }
-
 impl SelectedTab {
     /// Return tab's name as a styled `Line`
     fn title(self) -> Line<'static> {
         format!("  {self}  ")
-            .fg(tailwind::SLATE.c200)
+        .fg(tailwind::SLATE.c200)
             .bg(self.palette().c900)
             .into()
-    }
-
-    fn render_tab0(self, area: Rect, buf: &mut Buffer) {
-        Paragraph::new("Hello, World!")
+        }
+        
+        fn render_tab0(self, area: Rect, buf: &mut Buffer) {
+            Paragraph::new("base 64")
             .block(self.block())
             .render(area, buf);
     }
 
     fn render_tab1(self, area: Rect, buf: &mut Buffer) {
         Paragraph::new("Welcome to the Ratatui tabs example!")
-            .block(self.block())
+        .block(self.block())
             .render(area, buf);
     }
 
     fn render_tab2(self, area: Rect, buf: &mut Buffer) {
         Paragraph::new("Look! I'm different than others!")
-            .block(self.block())
-            .render(area, buf);
-    }
+        .block(self.block())
+        .render(area, buf);
+}
 
-    fn render_tab3(self, area: Rect, buf: &mut Buffer) {
-        Paragraph::new("I know, these are some basic changes. But I think you got the main idea.")
-            .block(self.block())
-            .render(area, buf);
-    }
+fn render_tab3(self, area: Rect, buf: &mut Buffer) {
+    Paragraph::new("I know, these are some basic changes. But I think you got the main idea.")
+    .block(self.block())
+    .render(area, buf);
+}
 
-    /// A block surrounding the tab's content
-    fn block(self) -> Block<'static> {
-        Block::default()
-            .borders(Borders::ALL)
-            .border_set(symbols::border::PROPORTIONAL_TALL)
-            .padding(Padding::horizontal(1))
-            .border_style(self.palette().c700)
-    }
+/// A block surrounding the tab's content
+fn block(self) -> Block<'static> {
+    Block::default()
+    .borders(Borders::ALL)
+    .border_set(symbols::border::PROPORTIONAL_TALL)
+    .padding(Padding::horizontal(1))
+    .border_style(self.palette().c700)
+}
 
-    const fn palette(self) -> tailwind::Palette {
-        match self {
-            Self::tab1 => tailwind::BLUE,
-            Self::Tab2 => tailwind::EMERALD,
-            Self::Tab3 => tailwind::INDIGO,
-            Self::Tab4 => tailwind::RED,
-            Self::Tab5 => tailwind::RED,
-            Self::Tab6 => tailwind::RED,
-        }
+const fn palette(self) -> tailwind::Palette {
+    match self {
+        Self::tab1 => tailwind::BLUE,
+        Self::Tab2 => tailwind::EMERALD,
+        Self::Tab3 => tailwind::INDIGO,
+        Self::Tab4 => tailwind::RED,
+        Self::Tab5 => tailwind::RED,
+        Self::Tab6 => tailwind::RED,
     }
+}
 }
 
 fn init_error_hooks() -> color_eyre::Result<()> {
@@ -242,3 +257,4 @@ fn restore_terminal() -> color_eyre::Result<()> {
     stdout().execute(LeaveAlternateScreen)?;
     Ok(())
 }
+
