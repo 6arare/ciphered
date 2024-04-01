@@ -27,8 +27,8 @@ enum AppState {
 
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 enum TabState {
-    #[default]
     Selected,
+    #[default]
     NotSelected,
 }
 
@@ -36,7 +36,7 @@ enum TabState {
 enum SelectedTab {
     #[default]
     #[strum(to_string = "base64")]
-    tab1,
+    Tab1,
     #[strum(to_string = "Hex")]
     Tab2,
     #[strum(to_string = "XOR")]
@@ -60,9 +60,9 @@ pub fn init_ui() -> Result<()> {
 impl App {
     fn run(&mut self, terminal: &mut Terminal<impl Backend>) -> Result<()> {
         while self.state == AppState::Running {
-            self.draw(terminal)?;
-            self.handle_events()?;
-        }
+                self.draw(terminal)?;
+                self.handle_events()?;
+            }
         Ok(())
     }
 
@@ -75,8 +75,8 @@ impl App {
         if let Event::Key(key) = event::read()? {
             if key.kind == KeyEventKind::Press {
                 match key.code {
-                    Char('l') | Right => self.next_tab(),
-                    Char('h') | Left => self.previous_tab(),
+                    Char('l') | Right =>if self.tab_state==TabState::NotSelected{self.next_tab()},
+                    Char('h') | Left => if self.tab_state==TabState::NotSelected{self.previous_tab()},
                     Char('q') | Esc => self.quit(),
                     Char('k') | Up => self.unselect_tab(),
                     Char('j') | Down => self.select_tab(),
@@ -98,12 +98,15 @@ impl App {
     pub fn quit(&mut self) {
         self.state = AppState::Quitting;
     }
+
     pub fn select_tab(&mut self){
         self.tab_state=TabState::Selected;
     }
+
     pub fn unselect_tab(&mut self){
         self.tab_state=TabState::NotSelected;
     }
+
 }
 
 impl SelectedTab {
@@ -130,13 +133,16 @@ impl Widget for &App {
 
         let horizontal = Layout::horizontal([Min(0), Length(20)]);
         let [tabs_area, title_area] = horizontal.areas(header_area);
-
+        // let [selected_tab_area, title_area]=horizontal.areas(Rect { x: (0), y: (20), width: (100), height: (100) });
+        Paragraph::new("paraghraph test");
         render_title(title_area, buf);
-        self.render_tabs(tabs_area, buf);
         self.selected_tab.render(inner_area, buf);
+        self.render_tabs(tabs_area, buf);
         render_footer(footer_area, buf);
-    }
-}
+        if self.tab_state==TabState::Selected{
+            // self.render_selected_tab(selected_tab_area,buf);
+        }
+}}
 
 impl App {
     fn render_tabs(&self, area: Rect, buf: &mut Buffer) {
@@ -149,6 +155,17 @@ impl App {
             .padding("", "")
             .divider(" ")
             .render(area, buf);
+    }
+    fn render_selected_tab(&self, area:Rect , buf : &mut Buffer){
+        let titles=SelectedTab::iter().map(SelectedTab::title);
+        let highlight_style=(Color::default(),self.selected_tab.palette().c700);
+        let selected_tab_index=self.selected_tab as usize;
+        Tabs::new(titles)
+        .highlight_style(highlight_style)
+        .select(selected_tab_index)
+        .padding("","")
+        .divider(" ")
+        .render(area, buf);
     }
 }
 
@@ -166,7 +183,7 @@ impl Widget for SelectedTab {
     fn render(self, area: Rect, buf: &mut Buffer) {
         // in a real app these might be separate widgets
         match self {
-            Self::tab1 => self.render_tab0(area, buf),
+            Self::Tab1 => self.render_tab0(area, buf),
             Self::Tab2 => self.render_tab1(area, buf),
             Self::Tab3 => self.render_tab2(area, buf),
             Self::Tab4 => self.render_tab3(area, buf),
@@ -177,29 +194,29 @@ impl Widget for SelectedTab {
 }
 impl SelectedTab {
     /// Return tab's name as a styled `Line`
-    fn title(self) -> Line<'static> {
-        format!("  {self}  ")
-        .fg(tailwind::SLATE.c200)
-            .bg(self.palette().c900)
-            .into()
-        }
-        
-        fn render_tab0(self, area: Rect, buf: &mut Buffer) {
-            Paragraph::new("base 64")
-            .block(self.block())
-            .render(area, buf);
-    }
+fn title(self) -> Line<'static> {
+format!("  {self}  ")
+    .fg(tailwind::SLATE.c200)
+    .bg(self.palette().c900)
+    .into()
+}
 
-    fn render_tab1(self, area: Rect, buf: &mut Buffer) {
-        Paragraph::new("Welcome to the Ratatui tabs example!")
-        .block(self.block())
-            .render(area, buf);
-    }
+fn render_tab0(self, area: Rect, buf: &mut Buffer) {
+    Paragraph::new("base 64")
+    .block(self.block())
+    .render(area, buf);
+}
 
-    fn render_tab2(self, area: Rect, buf: &mut Buffer) {
-        Paragraph::new("Look! I'm different than others!")
-        .block(self.block())
-        .render(area, buf);
+fn render_tab1(self, area: Rect, buf: &mut Buffer) {
+    Paragraph::new("Welcome to the Ratatui tabs example!")
+    .block(self.block())
+    .render(area, buf);
+}
+
+fn render_tab2(self, area: Rect, buf: &mut Buffer) {
+    Paragraph::new("Look! I'm different than others!")
+    .block(self.block())
+    .render(area, buf);
 }
 
 fn render_tab3(self, area: Rect, buf: &mut Buffer) {
@@ -219,12 +236,12 @@ fn block(self) -> Block<'static> {
 
 const fn palette(self) -> tailwind::Palette {
     match self {
-        Self::tab1 => tailwind::BLUE,
+        Self::Tab1 => tailwind::BLUE,
         Self::Tab2 => tailwind::EMERALD,
         Self::Tab3 => tailwind::INDIGO,
-        Self::Tab4 => tailwind::RED,
-        Self::Tab5 => tailwind::RED,
-        Self::Tab6 => tailwind::RED,
+        Self::Tab4 => tailwind::LIME,
+        Self::Tab5 => tailwind::AMBER,
+        Self::Tab6 => tailwind::EMERALD,
     }
 }
 }
