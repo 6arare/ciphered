@@ -1,10 +1,9 @@
 #![allow(clippy::wildcard_imports, clippy::enum_glob_use)]
-
+use ratatui::style::Style;
 use std::io::stdout;
-use KeyCode::*;
-use color_eyre::{config::HookBuilder, Result};
+use color_eyre::{config::HookBuilder, owo_colors::{colors::White, styles::BoldDisplay, OwoColorize}, Result};
 use crossterm::{
-    event::{self, Event, KeyCode, KeyEventKind},
+    event::{self, Event, KeyEventKind},
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
     ExecutableCommand,
 };
@@ -15,7 +14,7 @@ use strum::{Display, EnumIter, FromRepr, IntoEnumIterator};
 struct App {
     state: AppState,
     selected_tab: SelectedTab,
-    tab_state:TabState,
+    tab_state:bool,
 }
 
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
@@ -25,12 +24,6 @@ enum AppState {
     Quitting,
 }
 
-#[derive(Default, Clone, Copy, PartialEq, Eq)]
-enum TabState {
-    Selected,
-    #[default]
-    NotSelected,
-}
 
 #[derive(Default, Clone, Copy, Display, FromRepr, EnumIter)]
 enum SelectedTab {
@@ -75,36 +68,16 @@ impl App {
         if let Event::Key(key) = event::read()? {
             if key.kind == KeyEventKind::Press {
                 match key.code {
-                    Char('l') | Right =>if self.tab_state==TabState::NotSelected{self.next_tab()},
-                    Char('h') | Left => if self.tab_state==TabState::NotSelected{self.previous_tab()},
-                    Char('q') | Esc => self.quit(),
-                    Char('k') | Up => self.unselect_tab(),
-                    Char('j') | Down => self.select_tab(),
+                    event::KeyCode::Char('l') | event::KeyCode::Right =>if self.tab_state==false{self.selected_tab = self.selected_tab.next()},
+                    event::KeyCode::Char('h') | event::KeyCode::Left => if self.tab_state==false{self.selected_tab = self.selected_tab.previous()},
+                    event::KeyCode::Char('q')  => self.state=AppState::Quitting,
+                    event::KeyCode::Char('k') | event::KeyCode::Esc => self.tab_state=false,
+                    event::KeyCode::Char('j') | event::KeyCode::Enter => self.tab_state=true,
                     _ => {}
                 }
             }
         }
         Ok(())
-    }
-
-    pub fn next_tab(&mut self) {
-        self.selected_tab = self.selected_tab.next();
-    }
-
-    pub fn previous_tab(&mut self) {
-        self.selected_tab = self.selected_tab.previous();
-    }
-
-    pub fn quit(&mut self) {
-        self.state = AppState::Quitting;
-    }
-
-    pub fn select_tab(&mut self){
-        self.tab_state=TabState::Selected;
-    }
-
-    pub fn unselect_tab(&mut self){
-        self.tab_state=TabState::NotSelected;
     }
 
 }
@@ -135,11 +108,12 @@ impl Widget for &App {
         let [tabs_area, title_area] = horizontal.areas(header_area);
         // let [selected_tab_area, title_area]=horizontal.areas(Rect { x: (0), y: (20), width: (100), height: (100) });
         Paragraph::new("paraghraph test");
-        render_title(title_area, buf);
+        // render_title(title_area, buf);
         self.selected_tab.render(inner_area, buf);
         self.render_tabs(tabs_area, buf);
         render_footer(footer_area, buf);
-        if self.tab_state==TabState::Selected{
+        render_right_footer(footer_area, buf);
+        if self.tab_state==false{
             // self.render_selected_tab(selected_tab_area,buf);
         }
 }}
@@ -169,16 +143,20 @@ impl App {
     }
 }
 
-fn render_title(area: Rect, buf: &mut Buffer) {
-    "Ciphered".bold().render(area, buf);
-}
-
+// fn render_title(area: Rect, buf: &mut Buffer) {
+//     "Ciphered".bold().render(area, buf);
+// }
 fn render_footer(area: Rect, buf: &mut Buffer) {
-    Line::raw("◄ ► to change tab | Press q to quit")
-        .centered()
+    Line::raw("  q to quit   |   ◄ ► to change tab   |  Enter to use tab  |  Esc to exit tab")
+        .left_aligned()
         .render(area, buf);
+   
 }
-
+fn render_right_footer(area: Rect,buf: &mut Buffer){
+    Line::styled("Ciphered",Style::default().add_modifier(Modifier::BOLD).fg(Color::Cyan))
+    .right_aligned()
+    .render(area, buf)
+}
 impl Widget for SelectedTab {
     fn render(self, area: Rect, buf: &mut Buffer) {
         // in a real app these might be separate widgets
@@ -203,8 +181,30 @@ format!("  {self}  ")
 
 fn render_tab0(self, area: Rect, buf: &mut Buffer) {
     Paragraph::new("base 64")
+    .style(Style::default().fg(Color::Blue))
     .block(self.block())
     .render(area, buf);
+}
+fn render_tab0_selected(self, area: Rect, buf: &mut Buffer) {
+    let create_block = |title| {
+        Block::default()
+            .borders(Borders::ALL)
+            .style(Style::default().fg(Color::Gray))
+            .title(Span::styled(
+                title,
+                Style::default().add_modifier(Modifier::BOLD),
+            ))
+    };
+    Paragraph::new("base 64")
+    .style(Style::default().fg(Color::Blue))
+    .block(create_block("asdasdasd"))
+    .render(area, buf);
+    Paragraph::new("base 64\nasdasd\nasdasd")
+    .style(Style::default().add_modifier(Modifier::BOLD|Modifier::ITALIC).fg(Color::LightYellow))
+    .block(create_block("asdasdasd"))
+    .wrap(Wrap { trim: true })
+    .render(area, buf)
+    ;
 }
 
 fn render_tab1(self, area: Rect, buf: &mut Buffer) {
